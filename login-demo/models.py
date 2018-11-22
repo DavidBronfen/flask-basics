@@ -18,6 +18,7 @@ class User(UserMixin, Model):
         database = DATABASE
         order_by = ('-joined_at',)
 
+    @classmethod
     def create_user(cls, username, email, password, admin=False):
         try:
             cls.create(
@@ -27,3 +28,9 @@ class User(UserMixin, Model):
                 is_admin=admin)
         except IntegrityError:
             raise ValueError("User already exists")
+
+
+def initialize():
+    DATABASE.connect()
+    DATABASE.create_tables([User], safe=True)
+    DATABASE.close()
