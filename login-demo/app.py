@@ -1,7 +1,8 @@
-from flask import Flask, g
-from flask.ext.login import LoginManager
+from flask import (Flask, g, render_template, flash, redirect, url_for)
+from flask_login import LoginManager
 
 import models
+import forms
 
 DEBUG = True
 PORT = 8000
@@ -27,7 +28,8 @@ def load_user(userid):
 @app.before_request
 def before_request():
     """Connect to the database before each request."""
-    g.db = models.database.db.connect()
+    g.db = models.DATABASE
+    g.db.connect()
 
 
 @app.after_request
@@ -37,12 +39,34 @@ def after_request(response):
     return response
 
 
+@app.route('/register', methods=('GET', 'POST'))
+def register():
+    form = forms.RegistrationForm()
+    if form.validate_on_submit():
+        flash("You registered!", "success")
+        models.User.create_user(
+            username=form.username.data,
+            email=form.email.data,
+            password=form.password.data
+        )
+        return redirect(url_for('index'))
+    return render_template('register.html', form=form)
+
+
+@app.route('/')
+def index():
+    return 'Hey'
+
+
 if __name__ == '__main__':
     models.initialize()
-    models.User.create_user(
-        name="DavidBronfen",
-        email="davidbronfen@gmail.com",
-        password="12345",
-        admin=True
-    )
+    try:
+        models.User.create_user(
+            username="david",
+            email="davidb@gmail.com",
+            password="12345",
+            admin=True
+        )
+    except ValueError:
+        pass
     app.run(debug=DEBUG, host=HOST, port=PORT)
